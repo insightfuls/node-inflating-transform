@@ -68,7 +68,7 @@ class InflatingTransform extends Transform {
 			return
 		}
 
-		this.on('ready', () => {
+		this.once('ready', () => {
 			this._pushGeneratedData(generator, callback)
 		})
 	}
