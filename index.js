@@ -41,6 +41,36 @@ const { Transform } = require("node:stream")
 class InflatingTransform extends Transform {
 	constructor(opts) {
 		super(opts)
+		if (opts.generateTransformedData) {
+			this._generateTransformedData = opts.generateTransformedData
+		}
+	}
+
+	*_generateTransformedData(chunk, encoding) {
+	}
+
+	_transform(chunk, encoding, callback) {
+		const generator = this._generateTransformedData(chunk, encoding);
+
+		this._pushGeneratedData(generator, callback)
+	}
+
+	_pushGeneratedData(generator, callback) {
+		do {
+			const generated = generator.next();
+			if (typeof generated.value !== 'undefined') {
+				const canPushMore = this.push(generated.value.chunk, generated.value.encoding)
+			}
+		} while (!generated.done && canPushMore)
+
+		if (canPushMore) {
+			callback()
+			return
+		}
+
+		this.on('ready', () => {
+			this._pushGeneratedData(generator, callback)
+		})
 	}
 
 	_read(size) {
